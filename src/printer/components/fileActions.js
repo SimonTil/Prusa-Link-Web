@@ -12,7 +12,7 @@ import { setDisabled } from "../../helpers/element";
 /**
  * download file
  */
-export const downloadFile = (file) => {
+export const downloadFile = (file, onComplete) => {
   if (!file?.refs?.download)
     return; // TODO: Consider showing error
 
@@ -20,12 +20,15 @@ export const downloadFile = (file) => {
 
   if (!process.env["WITH_API_KEY_AUTH"]) {
     download(file.refs.download, displayFileName);
+    onComplete();
     return;
   }
 
   getFile(file.refs.download).then((url) => {
     download(url, displayFileName);
-  }).catch((result) => handleError(result))
+  }).catch(
+    (result) => handleError(result)
+  ).finally(onComplete);
 };
 
 
