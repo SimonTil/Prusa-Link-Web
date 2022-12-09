@@ -14,7 +14,10 @@ let isUploading = false;
 let progress = 0;
 
 function init(origin, path, fileExtensions) {
-  translate("upld.direct.choose", { query: "#upld-direct p", file: fileExtensions.join(", ") });
+  translate("upld.direct.choose", {
+    query: "#upld-direct p",
+    file: fileExtensions.join(", "),
+  });
   initInput(origin, path, fileExtensions);
   if (isUploading) {
     setState("uploading");
@@ -30,7 +33,7 @@ function update(linkState) {
     if (!canStartPrinting) {
       startPrintCheckbox.checked = false;
     }
-    setDisabled(startPrintCheckbox, !canStartPrinting)
+    setDisabled(startPrintCheckbox, !canStartPrinting);
   }
 }
 
@@ -46,14 +49,13 @@ function initInput(origin, path, fileExtensions) {
         let print = startPtCheckbox?.checked || false;
         uploadFile(file, origin, path, print);
       }
-    }
+    };
   }
 }
 
 function reset() {
   const input = document.querySelector('#upld-direct input[type="file"]');
-  if (input)
-    input.value = "";
+  if (input) input.value = "";
   setProgress(0);
   setState("choose");
 }
@@ -61,32 +63,29 @@ function reset() {
 function setState(state) {
   isUploading = state === "uploading";
   const el = document.getElementById("upld-direct");
-  if (el)
-    el.setAttribute("data-state", state);
+  if (el) el.setAttribute("data-state", state);
 }
 
 function setProgress(pct) {
   progress = pct;
   const el = document.getElementById("upld-progress");
-  if (el)
-    el.innerHTML = `${pct} %`;
+  if (el) el.innerHTML = `${pct} %`;
 }
 
 const uploadFile = (file, origin, path, print) => {
-  let url = `/api/files/${origin}`;
-  var data = new FormData()
-  data.append('path', path);
-  data.append('file', file);
-  data.append('print', print);
-
-  setState("uploading");
-  setProgress(0);
-  uploadRequest(url, data, {
-    onProgress: (progress) => onProgressChanged(progress.percentage)
-  }).then(result => onUploadSuccess(file.display || file.name))
-    .catch(result => onUploadError(file.display || file.name, result))
-    .finally(() => reset());
-}
+  let url = `/api/v1/files/${origin}/${path}/${file.name}`;
+  file.arrayBuffer().then((data) => {
+    setState("uploading");
+    setProgress(0);
+    uploadRequest(url, data, {
+      onProgress: (progress) => onProgressChanged(progress.percentage),
+      print,
+    })
+      .then((result) => onUploadSuccess(file.display || file.name))
+      .catch((result) => onUploadError(file.display || file.name, result))
+      .finally(() => reset());
+  });
+};
 
 function onProgressChanged(pct) {
   setState("uploading");
@@ -112,7 +111,7 @@ function onUploadError(fileName, result) {
 export default {
   init,
   update,
-  get isUploading () {
+  get isUploading() {
     return isUploading;
   },
 };
