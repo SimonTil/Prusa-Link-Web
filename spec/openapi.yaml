@@ -93,7 +93,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/FileInfo"
+                oneOf:
+                  - $ref: "#/components/schemas/PrintFileInfo"
+                  - $ref: "#/components/schemas/FirmwareFileInfo"
+                  - $ref: "#/components/schemas/OtherFileInfo"
+                  - $ref: "#/components/schemas/FolderInfo"
     put:
       summary: upload file or create folder
       parameters:
@@ -249,24 +253,6 @@ paths:
           $ref: "#/components/responses/Conflict"
         503:
           $ref: "#/components/responses/ServiceUnavailable"
-    patch:
-      summary: Edit a camera settings and / or configuration
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CameraConfigSet"
-      responses:
-        200:
-          description: OK
-        401:
-          $ref: "#/components/responses/Unauthorized"
-        403:
-          $ref: "#/components/responses/Forbidden"
-        404:
-          $ref: "#/components/responses/NotFound"
-        503:
-          $ref: "#/components/responses/ServiceUnavailable"
     delete:
       summary: Delete a camera
       responses:
@@ -334,7 +320,8 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
     post:
       summary: Make a snapshot with the camera
-      description: Can be manually done only during camera initialization
+      description: Can be manually done only during camera initialization or in
+                    manual mode
       requestBody:
         content:
           application/json: {}
@@ -394,7 +381,7 @@ paths:
 
   /api/v1/cameras/{id}/connection:
     post:
-      summary: Registers a camera to Connect
+      summary: Register a camera to Connect
       responses:
         200:
           description: OK
@@ -411,7 +398,7 @@ paths:
         503:
           $ref: "#/components/responses/ServiceUnavailable"
     delete:
-      summary: Un-registers a camera from Connect
+      summary: Un-register a camera from Connect
       responses:
         200:
           description: OK
@@ -624,13 +611,39 @@ components:
           type: boolean
           example: true
 
-    FileInfo:
+    FileTreeObject:
       type: object
       properties:
+        name:
+          type: string
+          example: "Spice_Harvester_0.3mm_PLA_MK3S_12m.gcode"
+        display_name:
+          type: string
+          description: Long Filename
+          example: "Spice_Harvester_0.3mm_PLA_MK3S_12m.gcode"
+        path:
+          type: string
+          example: "/local/Dune/Spice_Harvester_0.3mm_PLA_MK3S_12m.gcode"
+        display_path:
+          type: string
+          example: "/PrusaLink gcodes/Dune"
+        size:
+          type: integer
+          example: 424242
+        creation_timestamp:
+          type: integer
+          description: Timestamp in seconds
+          example: 1648038843
+        ro:
+          type: boolean
+          example: False
+        m_timestamp:
+          type: integer
+          example: 0
         type:
           type: string
-          description: File could be Print file, firmware or other (e.g. configuration file)
-          enum: ["PRINT_FILE", "FIRMWARE", "FILE", "FOLDER"]
+          description: File could be Print file, firmware or other (e.g. configuration file), or folder
+          enum: [ "PRINT_FILE", "FIRMWARE", "FILE", "FOLDER" ]
         refs:
           type: object
           properties:
@@ -643,118 +656,141 @@ components:
             thumbnail:
               type: string
               example: "/api/thumbnails/local/examples/Spice_Harvester_0.3mm_PLA_MK3S_42m.gcode.orig.png"
-        size:
-          type: integer
-          example: 424242
-        display_path:
-          type: string
-          example: "/PrusaLink gcodes/examples"
-        display_name:
-          type: string
-          description: Long Filename
-          example: "Spice_Harvester_0.3mm_PLA_MK3S_12m.gcode"
-        creation_timestamp:
-          type: integer
-          description: Timestamp in seconds
-          example: 1648038843
-        ro:
-          type: boolean
-          example: False
-        metadata:
-          type: object
-          description: Print file metadata parsed from G-code, all data are optional
+
+    PrintFileInfo:
+      allOf:
+        - $ref: '#/components/schemas/FileTreeObject'
+        - type: object
           properties:
-            bed_temperature:
-              type: string
-              description: Degrees Celsius
-              example: "60"
-            nozzle_temperature:
-              type: string
-              description: Degrees Celsius
-              example: "215"
-            brim_width:
-              type: string
-              description: Milimeters
-              example: "0"
-            estimated printing time (normal mode):
-              type: string
-              example: "42m 42s"
-            faded_layers:
-              type: string
-              example: "42"
-            filament cost:
-              type: string
-              example: "0.57"
-            filament used [cm3]:
-              type: string
-              example: "12.44"
-            filament used [g]:
-              type: string
-              example: "15.79"
-            filament used [mm]:
-              type: string
-              example: "5170.06"
-            filament_type:
-              type: string
-              example: "PLA"
-            fill_density:
-              type: string
-              description: Percent
-              example: "20%"
-            initial_exposure_time:
-              type: string
-              description: Seconds
-              example: "5"
-            layer_height:
-              type: string
-              description: Milimeters
-              example: "0.3"
-            material_name:
-              type: string
-              example: "PLA Sandstorm Orange"
-            exposure_time:
-              type: string
-              description: Seconds
-              example: "2"
-            max_exposure_time:
-              type: string
-              description: Seconds
-              example: "3"
-            max_initial_exposure_time:
-              type: string
-              description: Seconds
-              example: "3"
-            min_exposure_time:
-              type: string
-              description: Seconds
-              example: "1"
-            min_initial_exposure_time:
-              type: string
-              description: Seconds
-              example: "1"
-            nozzle_diameter:
-              type: string
-              description: Milimeters
-              example: "0.4"
-            print_time:
+            size:
               type: integer
-              description: Seconds
-              example: "2562"
-            printer_model:
-              type: string
-              enum:  ["MK3", "MK3S", "MINI"]
-            support_material:
-              type: string
-              example: "PLA"
-            ironing:
-              type: string
-              example: "0"
-            required_resin_ml:
-              type: string
-              example: "123.4"
-            profile:
-              type: string
-              example: "ultra_fast"
+              example: 424242
+            meta:
+              type: object
+              description: Print file metadata parsed from G-code, all data are optional
+              properties:
+                bed_temperature:
+                  type: string
+                  description: Degrees Celsius
+                  example: "60"
+                nozzle_temperature:
+                  type: string
+                  description: Degrees Celsius
+                  example: "215"
+                brim_width:
+                  type: string
+                  description: Milimeters
+                  example: "0"
+                estimated printing time (normal mode):
+                  type: string
+                  example: "42m 42s"
+                faded_layers:
+                  type: string
+                  example: "42"
+                filament cost:
+                  type: string
+                  example: "0.57"
+                filament used [cm3]:
+                  type: string
+                  example: "12.44"
+                filament used [g]:
+                  type: string
+                  example: "15.79"
+                filament used [mm]:
+                  type: string
+                  example: "5170.06"
+                filament_type:
+                  type: string
+                  example: "PLA"
+                fill_density:
+                  type: string
+                  description: Percent
+                  example: "20%"
+                initial_exposure_time:
+                  type: string
+                  description: Seconds
+                  example: "5"
+                layer_height:
+                  type: string
+                  description: Milimeters
+                  example: "0.3"
+                material_name:
+                  type: string
+                  example: "PLA Sandstorm Orange"
+                exposure_time:
+                  type: string
+                  description: Seconds
+                  example: "2"
+                max_exposure_time:
+                  type: string
+                  description: Seconds
+                  example: "3"
+                max_initial_exposure_time:
+                  type: string
+                  description: Seconds
+                  example: "3"
+                min_exposure_time:
+                  type: string
+                  description: Seconds
+                  example: "1"
+                min_initial_exposure_time:
+                  type: string
+                  description: Seconds
+                  example: "1"
+                nozzle_diameter:
+                  type: string
+                  description: Milimeters
+                  example: "0.4"
+                print_time:
+                  type: integer
+                  description: Seconds
+                  example: "2562"
+                printer_model:
+                  type: string
+                  enum: [ "MK3", "MK3S", "MINI" ]
+                support_material:
+                  type: string
+                  example: "PLA"
+                ironing:
+                  type: string
+                  example: "0"
+                required_resin_ml:
+                  type: string
+                  example: "123.4"
+                profile:
+                  type: string
+                  example: "ultra_fast"
+
+    FirmwareFileInfo:
+      allOf:
+        - $ref: '#/components/schemas/FileTreeObject'
+        - type: object
+          properties:
+            meta:
+              type: object
+              properties:
+                version:
+                  type: string
+                  description: Firmware version in text format
+                printer_type:
+                  type: integer
+                printer_version:
+                  type: integer
+
+    OtherFileInfo:
+      $ref: '#/components/schemas/FileTreeObject'
+
+    FolderInfo:
+      allOf:
+        - $ref: '#/components/schemas/FileTreeObject'
+        - type: object
+          properties:
+            file_count:
+              type: integer
+              example: 42
+            children:
+              type: array
+              description: Array of names of files and folders within this folder
 
     Info:
       type: object
