@@ -96,7 +96,7 @@ paths:
                 oneOf:
                   - $ref: "#/components/schemas/PrintFileInfo"
                   - $ref: "#/components/schemas/FirmwareFileInfo"
-                  - $ref: "#/components/schemas/OtherFileInfo"
+                  - $ref: "#/components/schemas/FileInfo"
                   - $ref: "#/components/schemas/FolderInfo"
     put:
       summary: upload file or create folder
@@ -590,7 +590,7 @@ components:
         trigger_scheme:
           type: string
           description: When the snapshot is taken
-          enum: [ EVERY_10_MIN, ON_LAYER_CHANGE ]
+          enum: [ TEN_SEC, THIRTY_SEC, SIXTY_SEC, EACH_LAYER, FIFTH_LAYER, MANUAL ]
         resolution:
           type: object
           properties:
@@ -611,60 +611,55 @@ components:
           type: boolean
           example: true
 
-    FileTreeObject:
+    FileInfo:
       type: object
+      required:
+        - name
+        - path
+        - ro
+        - type
+        - c_timestamp
+        - m_timestamp
       properties:
         name:
           type: string
-          example: "Spice_Harvester_0.3mm_PLA_MK3S_12m.gcode"
-        display_name:
-          type: string
-          description: Long Filename
-          example: "Spice_Harvester_0.3mm_PLA_MK3S_12m.gcode"
+          description: Short Filename
+          example: "SPICE~1.gco"
         path:
           type: string
-          example: "/local/Dune/Spice_Harvester_0.3mm_PLA_MK3S_12m.gcode"
-        display_path:
-          type: string
-          example: "/PrusaLink gcodes/Dune"
-        size:
-          type: integer
-          example: 424242
-        creation_timestamp:
-          type: integer
-          description: Timestamp in seconds
-          example: 1648038843
+          example: "/local/Dune/"
         ro:
           type: boolean
           example: False
-        m_timestamp:
+        size:
           type: integer
-          example: 0
+          description: Available for files only, not for folders
+          example: 424242
         type:
           type: string
-          description: File could be Print file, firmware or other (e.g. configuration file), or folder
+          description: File could be print file, firmware file, other (e.g. configuration) file, or folder
           enum: [ "PRINT_FILE", "FIRMWARE", "FILE", "FOLDER" ]
-        refs:
-          type: object
-          properties:
-            download:
-              type: string
-              example: "/api/files/local/examples/Spice_Harvester_0.3mm_PLA_MK3S_42m.gcode/raw"
-            icon:
-              type: string
-              example: "/api/thumbnails/local/examples/Spice_Harvester_0.3mm_PLA_MK3S_42m.gcode.small.png"
-            thumbnail:
-              type: string
-              example: "/api/thumbnails/local/examples/Spice_Harvester_0.3mm_PLA_MK3S_42m.gcode.orig.png"
+        c_timestamp:
+          type: integer
+          description: Timestamp in seconds
+          example: 1648038843
+        m_timestamp:
+          description: Timestamp in seconds
+          type: integer
+          example: 1648042843
 
     PrintFileInfo:
       allOf:
-        - $ref: '#/components/schemas/FileTreeObject'
+        - $ref: '#/components/schemas/FileInfo'
         - type: object
           properties:
-            size:
-              type: integer
-              example: 424242
+            display_name:
+              type: string
+              description: Long Filename
+              example: "Spice_Harvester_0.3mm_PLA_MK3S_12m.gcode"
+            display_path:
+              type: string
+              example: "/PrusaLink gcodes/Dune"
             meta:
               type: object
               description: Print file metadata parsed from G-code, all data are optional
@@ -760,10 +755,22 @@ components:
                 profile:
                   type: string
                   example: "ultra_fast"
+            refs:
+              type: object
+              properties:
+                download:
+                  type: string
+                  example: "/api/files/local/examples/Spice_Harvester_0.3mm_PLA_MK3S_42m.gcode/raw"
+                icon:
+                  type: string
+                  example: "/api/thumbnails/local/examples/Spice_Harvester_0.3mm_PLA_MK3S_42m.gcode.small.png"
+                thumbnail:
+                  type: string
+                  example: "/api/thumbnails/local/examples/Spice_Harvester_0.3mm_PLA_MK3S_42m.gcode.orig.png"
 
     FirmwareFileInfo:
       allOf:
-        - $ref: '#/components/schemas/FileTreeObject'
+        - $ref: '#/components/schemas/FileInfo'
         - type: object
           properties:
             meta:
@@ -777,12 +784,9 @@ components:
                 printer_version:
                   type: integer
 
-    OtherFileInfo:
-      $ref: '#/components/schemas/FileTreeObject'
-
     FolderInfo:
       allOf:
-        - $ref: '#/components/schemas/FileTreeObject'
+        - $ref: '#/components/schemas/FileInfo'
         - type: object
           properties:
             file_count:
@@ -790,7 +794,9 @@ components:
               example: 42
             children:
               type: array
-              description: Array of names of files and folders within this folder
+              items:
+                type: string
+                description: Array of names (name attribute) of files and folders within this folder
 
     Info:
       type: object
