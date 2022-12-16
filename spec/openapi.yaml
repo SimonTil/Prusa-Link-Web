@@ -94,9 +94,9 @@ paths:
             application/json:
               schema:
                 oneOf:
+                  - $ref: "#/components/schemas/FileInfo"
                   - $ref: "#/components/schemas/PrintFileInfo"
                   - $ref: "#/components/schemas/FirmwareFileInfo"
-                  - $ref: "#/components/schemas/FileInfo"
                   - $ref: "#/components/schemas/FolderInfo"
     put:
       summary: upload file or create folder
@@ -214,6 +214,14 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
 
   /api/v1/cameras/{id}:
+    parameters:
+    - in: path
+      name: id
+      description: ID of the camera
+      required: true
+      schema:
+        type: string
+        example: "Z42D4U2NqEX"
     get:
       summary: Get current settings and properties of specific camera
       responses:
@@ -295,6 +303,14 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
 
   /api/v1/cameras/{id}/snap:
+    parameters:
+      - in: path
+        name: id
+        description: ID of the camera
+        required: true
+        schema:
+          type: string
+          example: "Z42D4U2NqEX"
     get:
       summary: Return a captured image from the camera with a given id
       responses:
@@ -347,6 +363,14 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
 
   /api/v1/cameras/{id}/config:
+    parameters:
+      - in: path
+        name: id
+        description: ID of the camera
+        required: true
+        schema:
+          type: string
+          example: "Z42D4U2NqEX"
     patch:
       summary: Set new settings to a working camera
       requestBody:
@@ -380,6 +404,14 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
 
   /api/v1/cameras/{id}/connection:
+    parameters:
+      - in: path
+        name: id
+        description: ID of the camera
+        required: true
+        schema:
+          type: string
+          example: "Z42D4U2NqEX"
     post:
       summary: Register a camera to Connect
       responses:
@@ -618,7 +650,6 @@ components:
         - path
         - ro
         - type
-        - c_timestamp
         - m_timestamp
       properties:
         name:
@@ -639,10 +670,6 @@ components:
           type: string
           description: File could be print file, firmware file, other (e.g. configuration) file, or folder
           enum: [ "PRINT_FILE", "FIRMWARE", "FILE", "FOLDER" ]
-        c_timestamp:
-          type: integer
-          description: Timestamp in seconds
-          example: 1648038843
         m_timestamp:
           description: Timestamp in seconds
           type: integer
@@ -789,9 +816,6 @@ components:
         - $ref: '#/components/schemas/FileInfo'
         - type: object
           properties:
-            file_count:
-              type: integer
-              example: 42
             children:
               type: array
               items:
